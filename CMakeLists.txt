@@ -5,7 +5,7 @@ find_package(BinaryCodeWord 1.0.0 QUIET)
 
 if(NOT BinaryCodeWord_FOUND)
   include(FetchContent)
-  set(BINARY_CODE_WORD_GIT_URL "https://github.com/your-org/BinaryCodeWord.git")
+  set(BINARY_CODE_WORD_GIT_URL "https://github.com/nathanjrussell/BinaryCodeWord.git")
   message(STATUS "BinaryCodeWord not found; fetching from ${BINARY_CODE_WORD_GIT_URL} (v1.0.0)")
   FetchContent_Declare(
     BinaryCodeWordProj
@@ -24,9 +24,9 @@ target_include_directories(binarycodegenmat
     $<INSTALL_INTERFACE:include>)
 target_link_libraries(binarycodegenmat PUBLIC BinaryCodeWord::binarycodeword)
 
-add_executable(example_basic examples/basic_usage.cpp)
-target_link_libraries(example_basic PRIVATE BinaryCodeGenMat::binarycodegenmat)
-target_compile_features(example_basic PRIVATE cxx_std_17)
+add_executable(genmat_basic_example examples/basic_usage.cpp)
+target_link_libraries(genmat_basic_example PRIVATE BinaryCodeGenMat::binarycodegenmat)
+target_compile_features(genmat_basic_example PRIVATE cxx_std_17)
 
 include(CTest)
 option(BINARYCODEGENMAT_BUILD_TESTS "Build unit tests" ON)
