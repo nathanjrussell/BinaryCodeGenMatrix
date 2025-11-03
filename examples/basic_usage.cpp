@@ -16,7 +16,30 @@ int main() {
     s0.setBit(0,1);
     s1.setBit(1,1);
     BinaryCodeGenMat S({s0, s1});
+    std::cout<<G<<std::endl;
+    std::cout<<S<<std::endl;
     BinaryCodeGenMat H = G.augment(S);
+    std::cout<<H<<std::endl;
     std::cout << "H has k=" << H.numRows() << ", n=" << H.length() << "\n";
+
+    BinaryCodeGenMat I  = BinaryCodeGenMat::identity(4);
+    BinaryCodeGenMat J = I.augment(I);
+    std::cout<<J<<std::endl<<std::endl  ;
+
+    BinaryCodeGenMat all1(4,4);
+    for (int row =0; row<4; row++) {
+        for (int col=0; col<4; col++)
+        {
+            all1.setEntry(row,col,row==col ? 0 : 1);
+        }
+    }
+    BinaryCodeGenMat EH = BinaryCodeGenMat::identity(4).augment(all1);
+    std::cout<<EH<<std::endl;
+    BinaryCodeWord vv(4);
+    vv.setBit(0,1); vv.setBit(1,1); vv.setBit(3,1);
+    BinaryCodeWord result = vv * EH;
+    std::cout<<result<<" has weight "<<result.weight()<<std::endl;
+
+
     return 0;
 }

@@ -1,5 +1,12 @@
 #include "BinaryCodeGenMat.hpp"
 
+BinaryCodeGenMat::BinaryCodeGenMat(int k, int n)
+    : rows_(k, BinaryCodeWord(n)), k_(k), n_(n)
+{
+    if (k_ <= 0) throw std::invalid_argument("BinaryCodeGenMat: must have at least one row");
+    if (n_ <= 0) throw std::invalid_argument("BinaryCodeGenMat: must have positive length");
+}
+
 BinaryCodeGenMat::BinaryCodeGenMat(const std::vector<BinaryCodeWord>& rows)
     : rows_(rows), k_(static_cast<int>(rows.size())), n_(0)
 {
@@ -18,6 +25,14 @@ BinaryCodeWord& BinaryCodeGenMat::operator[](int r) {
 const BinaryCodeWord& BinaryCodeGenMat::operator[](int r) const {
     if (r < 0 || r >= k_) throw std::out_of_range("row index out of range");
     return rows_[r];
+}
+
+std::ostream& operator<<(std::ostream& os, const BinaryCodeGenMat& m) {
+    for (int i = 0; i < m.k_; ++i) {
+        os << m.rows_[i];
+        if (i + 1 < m.k_) os << '\n';
+    }
+    return os;
 }
 
 BinaryCodeGenMat BinaryCodeGenMat::augment(const BinaryCodeGenMat& rhs) const {
@@ -41,4 +56,19 @@ BinaryCodeWord operator*(const BinaryCodeWord& u, const BinaryCodeGenMat& G) {
     for (int i = 0; i < G.k_; ++i)
         if (u.getBit(i)) result += G.rows_[i];
     return result;
+}
+
+
+BinaryCodeGenMat  BinaryCodeGenMat::identity(int size) {
+    BinaryCodeGenMat I(size, size);
+    for (int i = 0; i < size; ++i) {
+        I.rows_[i].setBit(i, 1);
+    }
+    return I;
+}
+
+void BinaryCodeGenMat::setEntry(int r, int c, int value) {
+    if (r < 0 || r >= k_) throw std::out_of_range("row index out of range");
+    if (c < 0 || c >= n_) throw std::out_of_range("column index out of range");
+    rows_[r].setBit(c, value);
 }
