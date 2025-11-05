@@ -1,20 +1,34 @@
 cmake_minimum_required(VERSION 3.16)
-project(BinaryCodeGenMat VERSION 1.3.0 LANGUAGES CXX)
-
-find_package(BinaryCodeWord 2.0.3 QUIET)
-
-if(NOT BinaryCodeWord_FOUND)
-  include(FetchContent)
-  set(BINARY_CODE_WORD_GIT_URL "https://github.com/nathanjrussell/BinaryCodeWord.git")
-  set(BINARY_CODE_WORD_VERSION "2.0.2")
-  message(STATUS "BinaryCodeWord not found; fetching from ${BINARY_CODE_WORD_GIT_URL} tag ${BINARY_CODE_WORD_VERSION}")
-  FetchContent_Declare(
-    BinaryCodeWordProj
-    GIT_REPOSITORY ${BINARY_CODE_WORD_GIT_URL}
-    GIT_TAG        ${BINARY_CODE_WORD_VERSION}
-  )
-  FetchContent_MakeAvailable(BinaryCodeWordProj)
+# Read project version from `VERSION.txt` and use it in project()
+set(VERSION_FILE "${CMAKE_CURRENT_SOURCE_DIR}/VERSION.txt")
+if(NOT EXISTS "${VERSION_FILE}")
+  message(FATAL_ERROR "Missing ${VERSION_FILE} - create it with the project version (e.g. 2.0.2)")
 endif()
+
+file(READ "${VERSION_FILE}" _version_raw)
+string(STRIP "${_version_raw}" PROJECT_VERSION)
+
+if(NOT PROJECT_VERSION MATCHES "[0-9]\\.[0-9]\\.[0-9]")
+  message(WARNING "Read '${PROJECT_VERSION}' from ${VERSION_FILE} which may not match X[.Y][.Z] format")
+endif()
+
+project(BinaryCodeGenMatrix VERSION ${PROJECT_VERSION} LANGUAGES CXX)
+
+include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/external_repos.cmake)
+#find_package(BinaryCodeWord v2.5.0 QUIET)
+
+#if(NOT BinaryCodeWord_FOUND)
+#  include(FetchContent)
+#  set(BINARY_CODE_WORD_GIT_URL "https://github.com/nathanjrussell/BinaryCodeWord.git")
+#  set(BINARY_CODE_WORD_VERSION "2.0.2")
+#  message(STATUS "BinaryCodeWord not found; fetching from ${BINARY_CODE_WORD_GIT_URL} tag v${BINARY_CODE_WORD_VERSION}")
+#  FetchContent_Declare(
+#    BinaryCodeWordProj
+#    GIT_REPOSITORY ${BINARY_CODE_WORD_GIT_URL}
+#    GIT_TAG        v${BINARY_CODE_WORD_VERSION}
+#  )
+#  FetchContent_MakeAvailable(BinaryCodeWordProj)
+#endif()
 
 add_library(binarycodegenmat src/BinaryCodeGenMat.cpp)
 add_library(BinaryCodeGenMat::binarycodegenmat ALIAS binarycodegenmat)

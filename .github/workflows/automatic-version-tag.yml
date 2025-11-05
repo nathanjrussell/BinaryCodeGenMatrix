@@ -1,0 +1,82 @@
+name: Automatically Create Tag For New Version
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  tag-if-version-newer:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository (fetch tags)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Read version from `VERSION.txt`
+        id: version
+        run: |
+          VERSION=$(tr -d ' \t\r\n' < VERSION.txt)
+          if [ -z "$VERSION" ]; then
+            echo "VERSION.txt is empty"
+            exit 1
+          fi
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+
+      - name: Get latest tag (leave as-is)
+        id: latest
+        run: |
+          git fetch --tags
+          LATEST_TAG=$(git tag --sort=-v:refname | head -n1 || true)
+          if [ -z "$LATEST_TAG" ]; then
+            echo "latest=" >> $GITHUB_OUTPUT
+          else
+            echo "latest=$LATEST_TAG" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Compare and create tag if needed
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+          LATEST: ${{ steps.latest.outputs.latest }}
+        run: |
+          echo "VERSION=${VERSION}"
+          echo "LATEST=${LATEST:-<none>}"
+
+          # Strip a single leading 'v' from the latest tag only for numeric comparison
+          if [ -n "${LATEST}" ]; then
+            LATEST_STRIPPED=${LATEST#v}
+          else
+            LATEST_STRIPPED=""
+          fi
+
+          # If no previous tag (after stripping), create tag using VERSION exactly as read
+          if [ -z "${LATEST_STRIPPED}" ]; then
+            echo "No existing tags — creating ${VERSION}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${VERSION}" -m "Release ${VERSION}"
+            git push origin "refs/tags/${VERSION}"
+            exit 0
+          fi
+
+          if [ "${LATEST_STRIPPED}" = "${VERSION}" ]; then
+            echo "Latest tag equals VERSION.txt (${VERSION}) — nothing to do"
+            exit 0
+          fi
+
+          # Compare numeric versions using sort -V (compare stripped latest vs VERSION)
+          HIGHEST=$(printf "%s\n%s\n" "${LATEST_STRIPPED}" "${VERSION}" | sort -V | tail -n1)
+          if [ "${HIGHEST}" = "${VERSION}" ]; then
+            echo "VERSION.txt (${VERSION}) is newer than latest tag (${LATEST}) — creating tag ${VERSION}"
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git tag -a "${VERSION}" -m "Release ${VERSION}"
+            git push origin "refs/tags/${VERSION}"
+          else
+            echo "Latest tag (${LATEST}) >= VERSION.txt (${VERSION}) — no tag created"
+          fi
