@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.16)
 project(BinaryCodeGenMat VERSION 1.0.0 LANGUAGES CXX)
 
-find_package(BinaryCodeWord 2.0.2 QUIET)
+find_package(BinaryCodeWord 2.0.3 QUIET)
 
 if(NOT BinaryCodeWord_FOUND)
   include(FetchContent)
