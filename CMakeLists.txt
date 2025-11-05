@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.16)
-project(BinaryCodeGenMat VERSION 1.0.0 LANGUAGES CXX)
+project(BinaryCodeGenMat VERSION 1.3.0 LANGUAGES CXX)
 
 find_package(BinaryCodeWord 2.0.3 QUIET)
 
