@@ -1,7 +1,7 @@
 # BinaryCodeWord external repository configuration
 # variables (overrideable via -D on the command line)
 set(BINARY_CODE_WORD_GIT_URL "https://github.com/nathanjrussell/BinaryCodeWord.git" CACHE STRING "Git URL for BinaryCodeWord")
-set(BINARY_CODE_WORD_FETCH_TAG "2.9.0" CACHE STRING "Tag to fetch if BinaryCodeWord not found")
+set(BINARY_CODE_WORD_FETCH_TAG "2.10.0" CACHE STRING "Tag to fetch if BinaryCodeWord not found")
 
 find_package(BinaryCodeWord ${BINARY_CODE_WORD_FETCH_TAG} QUIET)
 
