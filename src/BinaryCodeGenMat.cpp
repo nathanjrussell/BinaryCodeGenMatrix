@@ -72,3 +72,27 @@ void BinaryCodeGenMat::setEntry(int r, int c, int value) {
     if (c < 0 || c >= n_) throw std::out_of_range("column index out of range");
     rows_[r].setBit(c, value);
 }
+
+bool BinaryCodeGenMat::operator==(const BinaryCodeGenMat& rhs) const {
+    if (k_ != rhs.k_ || n_ != rhs.n_) return false;
+    for (int i = 0; i < k_; ++i) {
+        if (!(rows_[i] == rhs.rows_[i])) return false;
+    }
+    return true;
+}
+
+bool BinaryCodeGenMat::operator!=(const BinaryCodeGenMat& rhs) const {
+    return !(*this == rhs);
+}
+
+BinaryCodeGenMat operator*(const BinaryCodeGenMat& lhs, const BinaryCodeGenMat& rhs) {
+    if (lhs.n_ != rhs.k_) throw std::invalid_argument("dimension mismatch in matrix multiplication");
+    std::vector<BinaryCodeWord> newRows;
+    newRows.reserve(lhs.k_);
+    for (int i = 0; i < lhs.k_; ++i) {
+        // Each row of the result is the row-vector lhs[i] multiplied by rhs
+        BinaryCodeWord res = lhs[i] * rhs;
+        newRows.push_back(res);
+    }
+    return BinaryCodeGenMat(newRows);
+}

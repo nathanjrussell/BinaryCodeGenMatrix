@@ -22,7 +22,12 @@ public:
     static BinaryCodeGenMat identity(int size);
     void setEntry(int r, int c, int value);
 
+    // Compare two matrices for equality
+    bool operator==(const BinaryCodeGenMat& rhs) const;
+    bool operator!=(const BinaryCodeGenMat& rhs) const;
+
     friend BinaryCodeWord operator*(const BinaryCodeWord& u, const BinaryCodeGenMat& G);
+    friend BinaryCodeGenMat operator*(const BinaryCodeGenMat& lhs, const BinaryCodeGenMat& rhs);
 
 private:
     std::vector<BinaryCodeWord> rows_;
