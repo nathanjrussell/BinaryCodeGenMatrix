@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(BinaryCodeGenMat VERSION 2.0.0 LANGUAGES CXX)
+project(BinaryCodeGenMat VERSION 2.1.0 LANGUAGES CXX)
 
 # Default to Release for single-config generators (Ninja/Unix Makefiles)
 if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
@@ -13,7 +13,7 @@ option(BCGM_BUILD_EXAMPLES "Build examples" OFF)
 # --- Dependency: BinaryCodeWord ---
 include(FetchContent)
 
-set(BCW_GIT_REPOSITORY "https://github.com/coding-theory-research/BinaryCodeWord.git" CACHE STRING "Git URL for BinaryCodeWord (required if not provided by parent)")
+set(BCW_GIT_REPOSITORY "https://github.com/nathanjrussell/BinaryCodeWord.git" CACHE STRING "Git URL for BinaryCodeWord (required if not provided by parent)")
 set(BCW_GIT_TAG "v2.1.0" CACHE STRING "Git tag for BinaryCodeWord")
 
 if(NOT TARGET BinaryCodeWord::BinaryCodeWord)
