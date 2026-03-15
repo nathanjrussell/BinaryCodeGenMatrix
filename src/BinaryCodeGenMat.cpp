@@ -58,6 +58,34 @@ BinaryCodeWord& BinaryCodeGenMat::operator[](int i) {
     return m_rows[i];
 }
 
+BinaryCodeWord operator*(const BinaryCodeWord& lhs, const BinaryCodeGenMat& rhs){
+    if (!lhs.initialized()){
+        throw std::logic_error("Left-hand BinaryCodeWord is uninitialized");
+    }
+    rhs.requireInitialized();
+    if (lhs.length() != rhs.numRows()) {
+        throw std::invalid_argument("Length of BinaryCodeWord does not match number of rows in BinaryCodeGenMat");
+    }
+    BinaryCodeWord result(rhs.length());
+    for (int row = 0; row < rhs.numRows(); ++row){
+        if (lhs.getBit(row) == 1) {
+            result += rhs[row];
+        }
+    }
+    return result;
+}
+
+void BinaryCodeGenMat::swapColumns(int c1, int c2){
+    requireInitialized();
+    if (c1 < 0 || c1 >= m_length || c2 < 0 || c2 >= m_length) {
+        throw std::out_of_range("Column index out of range");
+    }
+    if (c1 == c2) return;
+    for (int i = 0; i < m_numRows; ++i) {
+        m_rows[i].swap(c1, c2); // uses BinaryCodeWord::swap
+    }
+}
+
 void BinaryCodeGenMat::swapColumns(std::vector<BinaryCodeWord>& rows, int c1, int c2) {
     if (c1 == c2) return;
     for (auto& r : rows) {

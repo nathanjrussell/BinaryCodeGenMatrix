@@ -1,6 +1,11 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(BinaryCodeGenMat VERSION 1.0.0 LANGUAGES CXX)
+project(BinaryCodeGenMat VERSION 2.0.0 LANGUAGES CXX)
+
+# Default to Release for single-config generators (Ninja/Unix Makefiles)
+if(NOT CMAKE_CONFIGURATION_TYPES AND NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release CACHE STRING "Build type" FORCE)
+endif()
 
 option(BCGM_BUILD_TESTS "Build unit tests" OFF)
 option(BCGM_BUILD_EXAMPLES "Build examples" OFF)
@@ -9,7 +14,7 @@ option(BCGM_BUILD_EXAMPLES "Build examples" OFF)
 include(FetchContent)
 
 set(BCW_GIT_REPOSITORY "https://github.com/coding-theory-research/BinaryCodeWord.git" CACHE STRING "Git URL for BinaryCodeWord (required if not provided by parent)")
-set(BCW_GIT_TAG "v1.4.0" CACHE STRING "Git tag for BinaryCodeWord")
+set(BCW_GIT_TAG "v2.1.0" CACHE STRING "Git tag for BinaryCodeWord")
 
 if(NOT TARGET BinaryCodeWord::BinaryCodeWord)
     if(BCW_GIT_REPOSITORY STREQUAL "")
@@ -46,11 +51,18 @@ target_include_directories(BinaryCodeGenMat
 
 target_link_libraries(BinaryCodeGenMat PUBLIC BinaryCodeWord::BinaryCodeWord)
 
-if (MSVC)
-    target_compile_options(BinaryCodeGenMat PRIVATE /W4)
+if(MSVC)
+    target_compile_options(BinaryCodeGenMat PRIVATE
+            /W4
+            $<$<CONFIG:Release>:/O2>
+    )
 else()
-    target_compile_options(BinaryCodeGenMat PRIVATE -Wall -Wextra -Wpedantic)
+    target_compile_options(BinaryCodeGenMat PRIVATE
+            -Wall -Wextra -Wpedantic
+            $<$<CONFIG:Release>:-O3>
+    )
 endif()
+
 
 if(BCGM_BUILD_EXAMPLES)
     add_subdirectory(examples)

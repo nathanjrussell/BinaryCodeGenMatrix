@@ -27,8 +27,13 @@ public:
     const BinaryCodeWord& operator[](int i) const;
     BinaryCodeWord& operator[](int i);
 
+    // Codeword multiplied by Generator matrix
+    friend BinaryCodeWord operator*(const BinaryCodeWord& u, const BinaryCodeGenMat& G);
+
     // Return NEW matrix in systematic form
     BinaryCodeGenMat getSystematic() const;
+
+    void swapColumns(int c1, int c2);
 
 private:
     bool m_initialized{false};

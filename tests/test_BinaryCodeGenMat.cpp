@@ -347,3 +347,110 @@ TEST(BinaryCodeGenMat_Corners, MoreRowsThanColumnsRankAtMostN) {
     expectLeftIdentity(S);
     expectNoZeroRows(S);
 }
+
+
+
+TEST(BinaryCodeGenMat, SwapColumns) {
+    BinaryCodeGenMat G;
+
+    // Build rows using setBit only (no masks, no bit-order assumption beyond indices).
+    BinaryCodeWord r0(10);
+    r0.setBit(0, 1);
+    r0.setBit(1, 1);
+    BinaryCodeWord r1(10);
+    r1.setBit(0, 1);
+    BinaryCodeWord r2(10); /* all zeros */
+    BinaryCodeWord r3(10);
+    r3.setBit(9, 1);
+
+    G.pushRow(r0);
+    G.pushRow(r1);
+    G.pushRow(r2);
+    G.pushRow(r3);
+    G.initialize();
+
+    // Pre-swap sanity
+    EXPECT_EQ(G[0].getBit(0), 1);
+    EXPECT_EQ(G[0].getBit(9), 0);
+    EXPECT_EQ(G[3].getBit(0), 0);
+    EXPECT_EQ(G[3].getBit(9), 1);
+
+    // Swap columns 0 and 9: bits in those positions should exchange for every row.
+    G.swapColumns(0, 9);
+    EXPECT_EQ(G[0].getBit(0), 0);
+    EXPECT_EQ(G[0].getBit(9), 1);
+    EXPECT_EQ(G[1].getBit(0), 0);
+    EXPECT_EQ(G[1].getBit(9), 1);
+    EXPECT_EQ(G[2].getBit(0), 0);
+    EXPECT_EQ(G[2].getBit(9), 0);
+    EXPECT_EQ(G[3].getBit(0), 1);
+    EXPECT_EQ(G[3].getBit(9), 0);
+
+    // Swap back should restore original.
+    G.swapColumns(9, 0);
+    EXPECT_EQ(G[0].getBit(0), 1);
+    EXPECT_EQ(G[0].getBit(9), 0);
+    EXPECT_EQ(G[1].getBit(0), 1);
+    EXPECT_EQ(G[1].getBit(9), 0);
+    EXPECT_EQ(G[2].getBit(0), 0);
+    EXPECT_EQ(G[2].getBit(9), 0);
+    EXPECT_EQ(G[3].getBit(0), 0);
+    EXPECT_EQ(G[3].getBit(9), 1);
+
+    // Also exercise a different pair.
+    EXPECT_EQ(G[0].getBit(1), 1);
+    EXPECT_EQ(G[0].getBit(8), 0);
+
+    G.swapColumns(1, 8);
+    EXPECT_EQ(G[0].getBit(1), 0);
+    EXPECT_EQ(G[0].getBit(8), 1);
+
+    G.swapColumns(8, 1);
+    EXPECT_EQ(G[0].getBit(1), 1);
+    EXPECT_EQ(G[0].getBit(8), 0);
+
+}
+
+TEST(BinaryCodeGenMat, CodewordMultiplication) {
+    BinaryCodeGenMat G;
+
+    BinaryCodeWord r0(5);
+    r0.setBit(0, 1);
+    r0.setBit(2, 1);
+
+    BinaryCodeWord r1(5);
+    r1.setBit(1, 1);
+    r1.setBit(3, 1);
+
+    G.pushRow(r0);
+    G.pushRow(r1);
+    G.initialize();
+
+    BinaryCodeWord u(2); // length should match numRows
+    u.setBit(0, 1); // select r0 only
+    BinaryCodeWord c = u * G;
+    EXPECT_EQ(c.length(), 5);
+    EXPECT_EQ(c.getBit(0), 1);
+    EXPECT_EQ(c.getBit(1), 0);
+    EXPECT_EQ(c.getBit(2), 1);
+    EXPECT_EQ(c.getBit(3), 0);
+    EXPECT_EQ(c.getBit(4), 0);
+
+    u.setBit(0, 0);
+    u.setBit(1, 1); // select r1 only
+    c = u * G;
+    EXPECT_EQ(c.getBit(0), 0);
+    EXPECT_EQ(c.getBit(1), 1);
+    EXPECT_EQ(c.getBit(2), 0);
+    EXPECT_EQ(c.getBit(3), 1);
+    EXPECT_EQ(c.getBit(4), 0);
+
+    u.setBit(0, 1);
+    u.setBit(1, 1); // select both rows
+    c = u * G;
+    EXPECT_EQ(c.getBit(0), 1); // r0 and r1 add in bit 0
+    EXPECT_EQ(c.getBit(1), 1); // r0 and r1 add in bit 1
+    EXPECT_EQ(c.getBit(2), 1); // r0 only in bit 2
+    EXPECT_EQ(c.getBit(3), 1); // r1 only in bit 3
+    EXPECT_EQ(c.getBit(4), 0); // neither row has bit 4
+}
