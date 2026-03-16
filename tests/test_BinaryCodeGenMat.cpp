@@ -454,3 +454,199 @@ TEST(BinaryCodeGenMat, CodewordMultiplication) {
     EXPECT_EQ(c.getBit(3), 1); // r1 only in bit 3
     EXPECT_EQ(c.getBit(4), 0); // neither row has bit 4
 }
+
+// -----------------------------
+// New tests: transpose + arithmetic
+// -----------------------------
+
+TEST(BinaryCodeGenMat_Arithmetic, TransposeRoundTrip) {
+    BinaryCodeGenMat G;
+    BinaryCodeWord r0(4);
+    r0.setBit(1, 1);
+    r0.setBit(3, 1);
+    BinaryCodeWord r1(4);
+    r1.setBit(0, 1);
+    BinaryCodeWord r2(4);
+    r2.setBit(2, 1);
+    r2.setBit(3, 1);
+    G.pushRow(r0);
+    G.pushRow(r1);
+    G.pushRow(r2);
+    G.initialize();
+
+    BinaryCodeGenMat T = G.transpose();
+    EXPECT_EQ(T.numRows(), G.length());
+    EXPECT_EQ(T.length(), G.numRows());
+
+    BinaryCodeGenMat TT = T.transpose();
+    EXPECT_TRUE(TT == G);
+}
+
+TEST(BinaryCodeGenMat_Arithmetic, AddAndEquals) {
+    BinaryCodeGenMat A;
+    BinaryCodeWord a0(5);
+    a0.setBit(0, 1);
+    a0.setBit(2, 1);
+    BinaryCodeWord a1(5);
+    a1.setBit(1, 1);
+    A.pushRow(a0);
+    A.pushRow(a1);
+    A.initialize();
+
+    BinaryCodeGenMat B;
+    BinaryCodeWord b0(5);
+    b0.setBit(2, 1);
+    b0.setBit(4, 1);
+    BinaryCodeWord b1(5);
+    b1.setBit(1, 1);
+    b1.setBit(3, 1);
+    B.pushRow(b0);
+    B.pushRow(b1);
+    B.initialize();
+
+    BinaryCodeGenMat C = A + B;
+    EXPECT_EQ(C.length(), 5);
+    EXPECT_EQ(C.numRows(), 2);
+
+    // Expected rows are XOR
+    BinaryCodeWord e0(5);
+    e0.setBit(0, 1);
+    e0.setBit(4, 1);
+    BinaryCodeWord e1(5);
+    e1.setBit(3, 1);
+
+    EXPECT_TRUE(C[0] == e0);
+    EXPECT_TRUE(C[1] == e1);
+    EXPECT_TRUE((C != A));
+    EXPECT_TRUE((A == A));
+
+    A += B;
+    EXPECT_TRUE(A == C);
+}
+
+TEST(BinaryCodeGenMat_Arithmetic, MultiplySmall) {
+    // A is 2x3
+    BinaryCodeGenMat A;
+    BinaryCodeWord a0(3);
+    a0.setBit(0, 1);
+    a0.setBit(2, 1);
+    BinaryCodeWord a1(3);
+    a1.setBit(1, 1);
+    A.pushRow(a0);
+    A.pushRow(a1);
+    A.initialize();
+
+    // B is 3x4
+    BinaryCodeGenMat B;
+    BinaryCodeWord b0(4);
+    b0.setBit(0, 1);
+    b0.setBit(1, 1);
+    BinaryCodeWord b1(4);
+    b1.setBit(1, 1);
+    b1.setBit(2, 1);
+    BinaryCodeWord b2(4);
+    b2.setBit(3, 1);
+    B.pushRow(b0);
+    B.pushRow(b1);
+    B.pushRow(b2);
+    B.initialize();
+
+    BinaryCodeGenMat C = A * B; // 2x4
+    EXPECT_EQ(C.numRows(), 2);
+    EXPECT_EQ(C.length(), 4);
+
+    // Row0 = b0 + b2
+    BinaryCodeWord e0 = b0;
+    e0 += b2;
+    // Row1 = b1
+    BinaryCodeWord e1 = b1;
+
+    EXPECT_TRUE(C[0] == e0);
+    EXPECT_TRUE(C[1] == e1);
+
+    BinaryCodeGenMat C2 = A;
+    C2 *= B;
+    EXPECT_TRUE(C2 == C);
+}
+
+TEST(BinarySquareMatrix, PowerAndIdentity) {
+    // Build a simple 3x3 matrix
+    BinarySquareMatrix A;
+    BinaryCodeWord r0(3);
+    r0.setBit(0, 1);
+    r0.setBit(1, 1);
+    BinaryCodeWord r1(3);
+    r1.setBit(1, 1);
+    r1.setBit(2, 1);
+    BinaryCodeWord r2(3);
+    r2.setBit(0, 1);
+    r2.setBit(2, 1);
+    A.pushRow(r0);
+    A.pushRow(r1);
+    A.pushRow(r2);
+    A.initialize();
+
+    BinarySquareMatrix A0 = A.power(0);
+    BinaryIdentityMatrix I(3);
+    EXPECT_TRUE(A0 == I);
+
+    BinarySquareMatrix A1 = A.power(1);
+    EXPECT_TRUE(A1 == A);
+
+    BinarySquareMatrix A2 = A.power(2);
+    BinaryCodeGenMat brute = A * A;
+    EXPECT_TRUE(A2 == brute);
+
+    // Identity resizing
+    BinaryIdentityMatrix I2;
+    I2.setSize(4);
+    EXPECT_EQ(I2.numRows(), 4);
+    EXPECT_EQ(I2.length(), 4);
+    for (int i = 0; i < 4; ++i) {
+        for (int j = 0; j < 4; ++j) {
+            EXPECT_EQ(I2[i].getBit(j), (i == j) ? 1 : 0);
+        }
+    }
+}
+
+TEST(BinaryCodeGenMat_Dimension, GetDimMatchesBruteForceAndDoesNotMutate) {
+    BinaryCodeGenMat G;
+    // 4 columns, 5 rows with dependencies and a zero row
+    BinaryCodeWord r0(4); // 1100
+    r0.setBit(0, 1);
+    r0.setBit(1, 1);
+    BinaryCodeWord r1(4); // 0110
+    r1.setBit(1, 1);
+    r1.setBit(2, 1);
+    BinaryCodeWord r2(4); // r0 + r1 = 1010 (dependent)
+    r2 = r0;
+    r2 += r1;
+    BinaryCodeWord r3(4); // zero
+    BinaryCodeWord r4(4); // 0001 independent from r0,r1
+    r4.setBit(3, 1);
+
+    G.pushRow(r0);
+    G.pushRow(r1);
+    G.pushRow(r2);
+    G.pushRow(r3);
+    G.pushRow(r4);
+    G.initialize();
+
+    // Snapshot original rows
+    std::vector<BinaryCodeWord> orig;
+    for (int i = 0; i < G.numRows(); ++i) orig.push_back(G[i]);
+
+    // Brute-force rank on masks (bit i corresponds to column i)
+    std::vector<std::uint64_t> masks;
+    masks.reserve(static_cast<std::size_t>(G.numRows()));
+    for (int i = 0; i < G.numRows(); ++i) masks.push_back(toMask(G[i]));
+    const int brute = bruteRankGF2(masks);
+
+    EXPECT_EQ(G.getDim(), brute);
+
+    // Verify not mutated
+    for (int i = 0; i < G.numRows(); ++i) {
+        EXPECT_TRUE(G[i] == orig[i]);
+    }
+}
+
